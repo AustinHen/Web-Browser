@@ -8,9 +8,19 @@ fn main() {
     test_parser();
 }
 
+fn remove_comments(doc: &str) -> String{
+    //get those comments outa there
+    let r = Regex::new(r"(<!--.*-->)").unwrap();
+    let ret = r.replace_all(doc, "").into_owned();
+    return ret;
+}
+
 fn parse_html_string(doc: &str){
     /*Converts html into a dom tree */
     //denote the indexes of all of the opening and closing brackets
+    let temp = remove_comments(&doc);
+    let doc = temp.as_str();
+
     //I dont trust regex to be O of n for something this simple so im just doing it by hand 
     let mut opens : Vec<usize> = vec![];
     let mut closes : Vec<usize> = vec![];
@@ -43,7 +53,7 @@ fn parse_html_string(doc: &str){
 }
 
 fn process_tag(inner_tag: &str){
-    let tag_type_regex = Regex::new(r"<\s*(/?)\s*(\w+)\s*").unwrap(); //TODO fix regex
+    let tag_type_regex = Regex::new(r"<\s*(/?)\s*(\w+)\s*").unwrap(); 
     let feild_value_pair_regex = Regex::new(r#"\s*(\w*)\s*=\s*\"([^\"]*)\"\s*"#).unwrap();
 
     println!("inner tag: {inner_tag}");
