@@ -1,14 +1,17 @@
 mod types;
-fn main() {
-    println!("Booting up \n ");
-    test_parser();
-}
 use regex::Regex;
 use std::fs;
+
+
+fn main() {
+    println!("Booting up (what a great debug message) (useful newline)\n ");
+    test_parser();
+}
+
 fn parse_html_string(doc: &str){
     /*Converts html into a dom tree */
-    //We will denote the indexes of all of the opening and closing brackets and then
-    //I dont trust regex to be 0 of n for something this simple so im just doing it by hand 
+    //denote the indexes of all of the opening and closing brackets
+    //I dont trust regex to be O of n for something this simple so im just doing it by hand 
     let mut opens : Vec<usize> = vec![];
     let mut closes : Vec<usize> = vec![];
 
@@ -20,11 +23,12 @@ fn parse_html_string(doc: &str){
             closes.push(idx);
         }
     }
-    //TODO handle this better -> Prob should not throw an error just return some Err or somethin
+    //TODO handle this better -> Prob should not throw an error just return somthin 
     assert!(opens.len() == closes.len(), "there should be same number of open and closing brackets"); 
     
     //anything between a open and a close is an iner tag
     //anything between a close and an open is out of a tag 
+    //TODO fix comments 
     /*tokenizes doc*/
     for (idx, str_idx) in opens.iter().enumerate(){
         let substring: String = doc.chars().skip(opens[idx]).take(closes[idx] - str_idx + 1).collect();
@@ -39,11 +43,15 @@ fn parse_html_string(doc: &str){
 }
 
 fn process_tag(inner_tag: &str){
-    println!("starting to process tag");
-    let tag_type_regex = Regex::new(r"\s*(\\?)\s*(\w*)").unwrap();
+    let tag_type_regex = Regex::new(r"<\s*(/?)\s*(\w+)\s*").unwrap(); //TODO fix regex
     let feild_value_pair_regex = Regex::new(r#"\s*(\w*)\s*=\s*\"([^\"]*)\"\s*"#).unwrap();
 
     println!("inner tag: {inner_tag}");
+    
+    for i in tag_type_regex.captures_iter(inner_tag){
+        println!("merp {:?}, {:?}", &i[1], &i[2]);
+    }
+
     for i in feild_value_pair_regex.captures_iter(inner_tag){
         println!("values {:?}, {:?}", &i[1], &i[2]);
     }
