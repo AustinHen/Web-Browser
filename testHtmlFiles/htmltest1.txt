@@ -1,0 +1,76 @@
+<html
+
+>
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <!--font import-->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Zain:wght@200;300;400;700;800;900&display=swap" rel="stylesheet">
+    </head>
+    <body> 
+    <div id="fakeBody">
+        <div id="linkCont">
+            <a href="https://www.linkedin.com/feed/">LinkedIn | </a>
+            <a href="https://github.com/">GitHub</a>
+        </div>
+        <img src="1.png" id="cloud1">
+        <img src="3.png" id="cloud2">
+        <img src="0.png" id="cloud3">
+        <img src="0.png" id="cloud4">
+        <img src="0.png" id="cloud5">
+
+        <img src = 2.gif id="tree1" class="tree">
+        <img src = 2.gif id="tree2" class="tree">
+        <div id="mainSection">
+            <div id ="content">
+                <h1>Hi, I’m Austin.</h1>
+                <p>I am a Computer Science BS student at UMASS Amherst and a certified pilot. <br>
+                    </p>
+                <img src="unnamed.png" id="face">
+                <p><b>Relevant Projects:</b><br>
+                    &nbsp;&nbsp;Real Estate Comparables:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Fabricated a tool that reduces the time of real estate comparisons by 67% going from 1.5 hours to 30 minutes. <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Analyzes properties within 5-10 mile radius, testing for similarity and returning properties with similar metrics <br>
+                    <br>
+                    &nbsp;&nbsp;Regatta Manager Application: <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Collaborated with a team of 5 people following the Scrum/Agile framework over a period of 3 months <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Arbitrated with clients to engineer a full stack application used to manage and record regattas <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Devised a database system using sql <br>
+                    <br>
+                    &nbsp;&nbsp;Deep Learning Congress Stock Trading Bot: <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Deployed machine learning algorithms including CNN’s, RNN’s and deep neural networks to analyze and replicate congress people’s trading patterns using pytorch. <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Web Scraped several websites using python to collect required information and used MatplotLib, and pandas to curate data taking into account data balancing requirements. <br>
+                    <br>
+                    &nbsp;&nbsp;Text Editor | Shell: <br> 
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Created a working replica of the linux shell that supports a subset of basic commands such as CAT, CD, LS, the creation of files, and a working text editor that allows for file editing, navigation, and saving. <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- Utilized several data structures including ropes and trees. <br>
+
+                </p>
+
+                <p><b>Skills:</b><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Programming Languages: Java, Python, JavaScript/TypeScript, C, C++, R <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Front End: HTML, CSS, Angular, React <br> 
+                    &nbsp;&nbsp;&nbsp;&nbsp;Backend: SQL, MYSQL, Relational Databases,  MongoDB, Tableau, Excel <br>  
+                    &nbsp;&nbsp;&nbsp;&nbsp;Machine Learning: CNN, RNN, K Nearest Neighbors, Linear Regression, PyTorch <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Additional Skills: Web Scraping, Linux, Data Structures, GIT, Unity, Godot, Node.js, Vim <br>
+                    <br>
+                </p>
+
+                <p>
+                    <b>Contact Me:</b> <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Phone: (781) 513-6494 <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Email: ahenlotter@umass.edu
+                </p>
+
+                <!--<div id="fakePhone"></div> -->
+                
+            </div>
+
+        </div>
+            
+    </div>
+
+    </body>
+
+</html>

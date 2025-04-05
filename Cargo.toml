@@ -1,0 +1,9 @@
+[package]
+name = "WebBrowser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+egui = "0.31.1"
+maplit = "1.0.2"
+regex = "1.11.1"
