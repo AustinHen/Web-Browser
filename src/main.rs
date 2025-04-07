@@ -1,10 +1,12 @@
-mod gui; 
-use regex::Regex;
+mod gui;
+
+use std::cell::RefCell;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::rc::Rc;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::collections::VecDeque;
+
+use regex::Regex;
+
 
 fn main() {
     println!("Booting up (what a great debug message) (useful newline)\n ");
