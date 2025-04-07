@@ -2,18 +2,25 @@ mod gui;
 use regex::Regex;
 use std::fs;
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
 fn main() {
     println!("Booting up (what a great debug message) (useful newline)\n ");
-    //test_parser();
+    test_parser();
 }
 
 fn parse_doc(doc: &mut str){ //TODO figure out how to take ownership
                              //TODO look into cfg
     let doc = preprocess(doc);
     let dom_head = generate_dom_tree(doc.as_str());
+    if let Some(dom_head) = dom_head{
+        print_tree(dom_head, 0);
+    }else{
+        println!("ERROR tree aint there ");
+    }
+
 }
 
 fn preprocess(doc: &mut str) -> String{
@@ -27,7 +34,7 @@ fn remove_comments(doc: & str) -> String{
     return ret;
 }
 
-fn generate_dom_tree(preprocessed_doc: & str) -> Option<DomNode>{
+fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
     //TODO maybe update to call preprocesser 
     let doc = preprocessed_doc; //just easier name to work with
     let mut opens : Vec<usize> = vec![];
@@ -50,25 +57,54 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<DomNode>{
     //TODO fix comments 
     /*tokenizes doc*/
     let mut stack : VecDeque<Rc<DomNode>> = VecDeque::new();
-    let mut head : Option<Rc<DomNode>> = None;
+    let mut dom_head : Option<Rc<DomNode>> = None;
     for (idx, str_idx) in opens.iter().enumerate(){
+        //ADDS TAG
         let substring: String = doc.chars().skip(opens[idx]).take(closes[idx] - str_idx + 1).collect();
-        //println!("{substring}");
-        //process_tag(&substring);
+        if let Some(TagCreateResult::Node(to_add)) = DomNode::get_tag(&substring){
+            let to_add = Rc::new(to_add);
+            if let Some(head) = stack.front(){
+                //add to_add as child 
+                head.children.borrow_mut().push(to_add.clone());
+            }
+            
+            //TODO handle standalone tags
+            //makes two add the new head
+            if ! DomNode::is_standalone_tag(&to_add.clone()){
+                stack.push_front(to_add.clone());
+            }
 
-        if opens.len() > idx+1{
-            //process_non_tag(doc, closes[idx], opens[idx+1]);
+            //updates dom head TODO make better  
+            if idx == 0{
+                dom_head = Some(to_add);
+            }
+        }else{
+            //prob close tag for most recent tag
+            stack.pop_front(); 
+        }
+
+        //ADDS NON TAG
+        if opens.len() <= idx+1{
+            continue; // no non tag 
+        }
+
+        let substring: String = doc.chars().skip(closes[idx] + 1).take(opens[idx+1]-closes[idx]-1).collect();
+        if let Some(to_add) = DomNode::get_non_tag(&substring){
+            if let Some(head) = stack.front(){
+                let to_add = Rc::new(to_add);
+                head.children.borrow_mut().push(to_add);
+            }            
         }
 
     }
 
-    todo!();
+    return dom_head; 
 }
 
 struct DomNode{
     tag_name: String, //TODO could make enum of types but idk yet 
-    children: Vec<Rc<DomNode>>,
-    data: DomNodeData,
+    children: RefCell<Vec<Rc<DomNode>>>,
+    data: RefCell<DomNodeData>,
 }
 
 enum DomNodeData{
@@ -99,7 +135,7 @@ impl DomNode{
             ret_values.insert(i[1].to_string(), i[2].to_string());
         }
         //TODO break up into more lines
-        return Some(TagCreateResult::Node(Self {tag_name: ret_tag_name, children: Vec::new(), data: DomNodeData::ValueMap(ret_values)}));
+        return Some(TagCreateResult::Node(Self {tag_name: ret_tag_name, children: RefCell::new(Vec::new()), data: RefCell::new(DomNodeData::ValueMap(ret_values))}));
  
     }
 
@@ -107,12 +143,55 @@ impl DomNode{
         if content.trim().is_empty(){
             return None;
         }
-        return Some(Self {tag_name: "content".to_string(), children: Vec::new(), data: DomNodeData::Content(content.to_string())});
+        return Some(Self {tag_name: "content".to_string(), children: RefCell::new(Vec::new()), data: RefCell::new(DomNodeData::Content(content.trim().to_string()))});
     }
 
-    fn is_standalone_tag() -> bool{
-        todo!();
+    fn is_standalone_tag(node: &Self) -> bool{
+        //kinda just looks at a list of em 
+        let self_closing_tags = vec![
+            "area",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "source",
+            "track",
+            "wbr"
+        ];
+        for tag in self_closing_tags{
+            if node.tag_name == tag{
+                return true;
+            }
+        }
+        false
+
     }
+}
+
+fn print_tree(head : Rc<DomNode>, depth : usize){
+    for _ in 0..depth{
+        print!("--");
+    }
+
+    if head.tag_name == "content"{
+        print!("content: ");
+        match *head.data.borrow(){
+            DomNodeData::Content(ref i) => println!("{i}"),
+            _ => println!("no content"),
+        }
+    }else{
+        println!("{0}", head.tag_name);
+    }
+
+    //prints children
+    for child in head.children.borrow().iter(){
+        print_tree(child.clone(), depth + 1);
+    }
+
 }
 
 enum TagCreateResult{
@@ -124,49 +203,13 @@ enum TagCreateResult{
 
 //--------------------REMOVE BELLOW---------------------//
 
-/*Converts html into a dom tree */
-fn parse_html_string(doc: &str){
-    let temp = remove_comments(&doc);
-    let doc = temp.as_str();
-
-    let mut opens : Vec<usize> = vec![];
-    let mut closes : Vec<usize> = vec![];
-
-    for (idx, char) in doc.chars().enumerate(){
-        if char == '<'{
-            opens.push(idx);
-        }
-        if char == '>'{
-            closes.push(idx);
-        }
-    }
-
-    //TODO handle this better -> Prob should not throw an error just return somthin 
-    assert!(opens.len() == closes.len(), "there should be same number of open and closing brackets"); 
-    
-    //anything between a open and a close is an iner tag
-    //anything between a close and an open is out of a tag 
-    //TODO fix comments 
-    /*tokenizes doc*/
-    for (idx, str_idx) in opens.iter().enumerate(){
-        let substring: String = doc.chars().skip(opens[idx]).take(closes[idx] - str_idx + 1).collect();
-        //println!("{substring}");
-        //process_tag(&substring);
-
-        if opens.len() > idx+1{
-            //process_non_tag(doc, closes[idx], opens[idx+1]);
-        }
-
-    }
-}
-
 
 fn test_parser(){
     /*reads in html files and passes them into parse_html_string*/
     print!("STARTING HTML TEST 1 \n");
     let string = fs::read_to_string("testHtmlFiles/htmltest1.txt");
     match string {
-       Ok(i) => parse_html_string(&i),
+       Ok(mut i) => parse_doc(&mut i),
        _ => panic!("could not open file")
     };
 
