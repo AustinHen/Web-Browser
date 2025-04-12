@@ -11,6 +11,7 @@ use regex::Regex;
 fn main() {
     println!("Booting up (what a great debug message) (useful newline)\n ");
     test_parser();
+    gui::gui_main();
 }
 
 fn parse_doc(doc: &mut str){ //TODO figure out how to take ownership
@@ -27,7 +28,10 @@ fn parse_doc(doc: &mut str){ //TODO figure out how to take ownership
 
 fn preprocess(doc: &mut str) -> String{
    return remove_comments(doc); 
-   //maybe do somethin else like pre fetch content in srcs 
+}
+
+fn fetch_srcs(){
+    todo!();
 }
 
 fn remove_comments(doc: & str) -> String{
@@ -37,8 +41,7 @@ fn remove_comments(doc: & str) -> String{
 }
 
 fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
-    //TODO maybe update to call preprocesser 
-    let doc = preprocessed_doc; //just easier name to work with
+    let doc = preprocessed_doc; 
     let mut opens : Vec<usize> = vec![];
     let mut closes : Vec<usize> = vec![];
 
@@ -56,7 +59,6 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
     
     //anything between a open and a close is an iner tag
     //anything between a close and an open is out of a tag 
-    //TODO fix comments 
     /*tokenizes doc*/
     let mut stack : VecDeque<Rc<DomNode>> = VecDeque::new();
     let mut dom_head : Option<Rc<DomNode>> = None;
@@ -70,8 +72,7 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
                 head.children.borrow_mut().push(to_add.clone());
             }
             
-            //TODO handle standalone tags
-            //makes two add the new head
+            //makes to_add new head
             if ! DomNode::is_standalone_tag(&to_add.clone()){
                 stack.push_front(to_add.clone());
             }
@@ -136,7 +137,7 @@ impl DomNode{
         for i in feild_value_pair_regex.captures_iter(tag_content){
             ret_values.insert(i[1].to_string(), i[2].to_string());
         }
-        //TODO break up into more lines
+        //thats one long line 
         return Some(TagCreateResult::Node(Self {tag_name: ret_tag_name, children: RefCell::new(Vec::new()), data: RefCell::new(DomNodeData::ValueMap(ret_values))}));
  
     }
@@ -164,16 +165,17 @@ impl DomNode{
             "track",
             "wbr"
         ];
+        // .contains() but worse
         for tag in self_closing_tags{
             if node.tag_name == tag{
                 return true;
             }
         }
         false
-
     }
 }
 
+//TODO move to tests/debug file 
 fn print_tree(head : Rc<DomNode>, depth : usize){
     for _ in 0..depth{
         print!("--");
