@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+eframe = "0.31.1"
 egui = "0.31.1"
 iced = "0.13.1"
 maplit = "1.0.2"
