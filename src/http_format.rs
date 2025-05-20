@@ -1,4 +1,4 @@
-//All http messages will be gets 
+//calls http_header with some values filled in 
 #[macro_export]
 macro_rules! http_get {
     ($host: expr, $url: expr) => {
@@ -21,7 +21,7 @@ macro_rules! http_get {
 
 }
 
-
+//used to constructed a header for a http msg 
 #[macro_export]
 macro_rules! http_header {
     ($msg_type : expr, $url : expr, $version : expr, $($name : expr, $val : expr ),*) => {
@@ -51,5 +51,3 @@ macro_rules! http_header {
     };
 }
 
-
-// some mechanism to extract host / file path 

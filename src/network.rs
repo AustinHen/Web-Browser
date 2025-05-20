@@ -1,9 +1,9 @@
 use crate::http_get;
 use std::io::prelude::*;
 use std::net::TcpStream;
+use std::collections::HashMap;
 
-//todo change oprion into result
-pub fn get_file(url: &str, file_name: &str) -> Option<String>{
+pub fn get_file(url: &str, file_name: &str) -> Option<HttpResponse>{
     let request_msg = http_get!(url, file_name);
     let request_msg = request_msg.into_bytes();
     let Ok(mut stream) = TcpStream::connect(format!("{url}:80")) else {return None;};
@@ -14,13 +14,35 @@ pub fn get_file(url: &str, file_name: &str) -> Option<String>{
     }
 
     //read in file 
-    let mut temp_buff = [0; 128];
-    stream.read(& mut temp_buff);
+    let mut read_bytes = Vec::new();
 
-    println!("{:?}", temp_buff);
+    loop {
+        let mut temp_buff = [0; 128];
+        if let Ok(len) = stream.read(& mut temp_buff){ 
+            if len == 0 {
+                break;
+            }
 
+            read_bytes.extend_from_slice(&temp_buff[0..len as usize]);
+        }else{
+            println!("err when reading file");
+            break;
+        }
+    }
+    println!("{:?}", read_bytes);
 
-    
-    Some(String::new()) // TODO change ret
+    Some(HttpResponse::new()) // TODO change ret
 }
 
+
+pub struct HttpResponse{
+    pub response_code: usize,
+    pub meta_data: HashMap<String, String>,
+    pub body: String,
+}
+
+impl HttpResponse{
+    pub fn new() -> Self{
+        todo!();
+    }
+}
