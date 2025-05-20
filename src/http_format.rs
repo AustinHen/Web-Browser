@@ -3,7 +3,7 @@
 macro_rules! http_get {
     ($host: expr, $url: expr) => {
         {
-            http_header!(
+            $crate::http_header!(
                 "GET", 
                 $url, 
                 "HTTP/1.1",
@@ -13,8 +13,9 @@ macro_rules! http_get {
                 "Accept-Language", "en-us",
                 "Accept-Encoding", "deflate",
                 "Accept-Charset", "utf-8",
-                "Cache-Control", "no-cache"
-                )
+                "Cache-Control", "no-cache",
+                "Connection", "close"
+                 )
         }
     };
 
@@ -51,4 +52,4 @@ macro_rules! http_header {
 }
 
 
-
+// some mechanism to extract host / file path 
