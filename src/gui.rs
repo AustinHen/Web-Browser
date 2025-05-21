@@ -1,5 +1,7 @@
 use eframe;
+use std::cell::RefCell;
 use std::rc::Rc;
+use std::collections::HashMap;
 use crate::htmlParser::*;
 //REMOVE THIS IMORT AFTER TESTING
 use std::fs;
@@ -51,7 +53,7 @@ impl BrowserApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         BrowserApp{ 
             search_string: "".to_string(),
-            dom_head: None
+            dom_head: Some(get_default_dom_head())
         }
     }
 
@@ -128,6 +130,58 @@ impl eframe::App for BrowserApp{
             });
         });
     }
+}
+
+fn get_err_dom_head(err_no: &str) -> Rc<DomNode>{
+    let title = Rc::new(DomNode{
+        tag_name: "content".to_string(),
+        children: RefCell::new(Vec::new()),
+        data: RefCell::new(DomNodeData::Content("ERROR!!".to_string())),
+    });
+
+    let title_head = Rc::new(DomNode{
+        tag_name: "h1".to_string(),
+        children: RefCell::new(vec![title]),
+        data: RefCell::new(DomNodeData::ValueMap(HashMap::new()))
+    });
+
+    let more_text = Rc::new(DomNode{
+        tag_name: "content".to_string(),
+        children: RefCell::new(Vec::new()),
+        data: RefCell::new(DomNodeData::Content(format!("Errno:{err_no}"))),
+    });
+
+    Rc::new(DomNode{
+        tag_name: "html".to_string(),
+        children: RefCell::new(vec![title_head, more_text]),
+        data: RefCell::new(DomNodeData::ValueMap(HashMap::new()))
+    })
+}
+
+fn get_default_dom_head() -> Rc<DomNode>{
+    let title = Rc::new(DomNode{
+        tag_name: "content".to_string(),
+        children: RefCell::new(Vec::new()),
+        data: RefCell::new(DomNodeData::Content("Browser".to_string())),
+    });
+
+    let title_head = Rc::new(DomNode{
+        tag_name: "h1".to_string(),
+        children: RefCell::new(vec![title]),
+        data: RefCell::new(DomNodeData::ValueMap(HashMap::new()))
+    });
+
+    let more_text = Rc::new(DomNode{
+        tag_name: "content".to_string(),
+        children: RefCell::new(Vec::new()),
+        data: RefCell::new(DomNodeData::Content("the worlds best browser".to_string())),
+    });
+
+    Rc::new(DomNode{
+        tag_name: "html".to_string(),
+        children: RefCell::new(vec![title_head, more_text]),
+        data: RefCell::new(DomNodeData::ValueMap(HashMap::new()))
+    })
 }
 
 pub fn gui_main() {
