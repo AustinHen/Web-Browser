@@ -3,8 +3,16 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::HashMap;
 use crate::htmlParser::*;
-//REMOVE THIS IMORT AFTER TESTING
+//REMOVE THIS IMPORT AFTER TESTING
 use std::fs;
+
+pub fn gui_main() {
+    let _ = eframe::run_native(
+        "eframe template",
+        eframe::NativeOptions::default(),
+        Box::new(|cc| Ok(Box::new(BrowserApp::temp_new(cc)))),
+    );
+}
 
 struct BrowserApp{
     search_string: String, 
@@ -28,6 +36,7 @@ impl HeadState{
     pub fn update_state(&mut self, node: &Rc<DomNode>){
         const FONT_STEP_SIZE: usize = 2;
         match node.tag_name.as_str(){
+            //fight me 
             "h1" => {self.font_size = 12 + FONT_STEP_SIZE*5},
             "h2" => {self.font_size = 12 + FONT_STEP_SIZE*4},
             "h3" => {self.font_size = 12 + FONT_STEP_SIZE*3},
@@ -132,6 +141,7 @@ impl eframe::App for BrowserApp{
     }
 }
 
+//todo make macro do make pages for us 
 fn get_err_dom_head(err_no: &str) -> Rc<DomNode>{
     let title = Rc::new(DomNode{
         tag_name: "content".to_string(),
@@ -182,14 +192,6 @@ fn get_default_dom_head() -> Rc<DomNode>{
         children: RefCell::new(vec![title_head, more_text]),
         data: RefCell::new(DomNodeData::ValueMap(HashMap::new()))
     })
-}
-
-pub fn gui_main() {
-    let _ = eframe::run_native(
-        "eframe template",
-        eframe::NativeOptions::default(),
-        Box::new(|cc| Ok(Box::new(BrowserApp::temp_new(cc)))),
-    );
 }
 
 

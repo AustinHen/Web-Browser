@@ -1,18 +1,21 @@
 use crate::http_get;
+use crate::url_format::Url; 
 use native_tls::TlsConnector;
-use std::io::prelude::*;
+use std::io::prelude::*; //prob could cut down this import 
 use std::net::TcpStream;
 use std::collections::HashMap;
 
-pub fn get_file(url: &str, file_name: &str) -> Option<HttpResponse>{
+//sends a http/https get msg and returns the server's response
+pub fn get_file(url: Url) -> Option<HttpResponse>{
     //sets up tsl
     let connector = TlsConnector::new().unwrap(); 
 
-    let request_msg = http_get!(url, file_name);
+    let request_msg = http_get!(&url.addr, &url.path);
     let request_msg = request_msg.into_bytes();
 
-    let Ok(stream) = TcpStream::connect(format!("{url}:443")) else {return None;};
-    let Ok(mut stream) = connector.connect(url, stream) else {
+    let port_num = if url.protocol == "https" {"443"} else {"80"}; //default to http
+    let Ok(stream) = TcpStream::connect(format!("{0}:{port_num}", url.addr)) else {return None;};
+    let Ok(mut stream) = connector.connect(&url.addr, stream) else {
         println!("here");
         return None;};
     
@@ -39,41 +42,50 @@ pub fn get_file(url: &str, file_name: &str) -> Option<HttpResponse>{
     }
     println!("{0}", String::from_utf8(read_bytes.clone()).unwrap());
 
-    Some(HttpResponse::new(&read_bytes)) // TODO change ret
+    HttpResponse::new(&read_bytes) 
 }
 
 
-pub struct HttpResponse{
+pub struct HttpResponse{ //i hate pub
     pub response_code: usize,
     pub meta_data: HashMap<String, String>,
     pub body: String,
 }
 
 impl HttpResponse{
-    pub fn new(bytes: &[u8]) -> Self{
-        let mut cols_idxs : Vec<usize> = Vec::new();
-        let mut nl_idxs : Vec<usize> = Vec::new();
+    pub fn new(bytes: &[u8]) -> Option<Self>{
+        //split body and header 
+        let bytes = bytes.to_vec();
+        let bytes = String::from_utf8(bytes).unwrap();
+        let Some((header, body)) = bytes.split_once("\r\n\r\n") else {return None};
 
-        //finds idxs 
-        for (i, val) in bytes.iter().enumerate(){
-            if val == &(':' as u8){
-                cols_idxs.push(i);
-            }
-
-            if val == &('\n' as u8) {
-                nl_idxs.push(i);
-            }
-        }
+        //parse header 
+        let header_lines : Vec<&str> = header.split("\n").collect();
         
-        //we dont have a valid http msg -> can just say we got a 400
-        if nl_idxs.len() == 0{
-            return Self{ response_code: 400, meta_data: HashMap::new(), body: String::new()};
-        }
-
         //get the response code out of the first line 
-        for i in 0..nl_idxs[0]{
+        let mut res_code : usize = 0;
+        for char in header_lines[0].chars(){
+            if char >= '0' && char <= '9'{
+                res_code *= 10;
+                res_code += (char as u8  - '0' as u8) as usize;  //c is so nice : no as nonsense 
+            }
         }
 
-        todo!();
+        //get all meta data 
+        let mut meta_data : HashMap<String, String> = HashMap::new();
+
+        for line in header_lines[1..].iter(){
+            let Some((title, val)) = line.split_once("") else {
+                continue;
+            };
+
+            let title = title.trim();
+            let val = val.trim();
+
+            meta_data.insert(title.to_string(), val.to_string());
+
+        }
+
+        return Some(Self{response_code: res_code, meta_data , body: body.to_string()});
     }
 }
