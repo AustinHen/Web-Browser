@@ -1,3 +1,5 @@
+use std::sync::mpsc;
+use std::thread;
 use eframe;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -10,81 +12,51 @@ pub fn gui_main() {
     let _ = eframe::run_native(
         "eframe template",
         eframe::NativeOptions::default(),
-        Box::new(|cc| Ok(Box::new(BrowserApp::temp_new(cc)))),
+        Box::new(|cc| Ok(Box::new(BrowserApp::new(cc)))),
     );
 }
 
 struct BrowserApp{
     search_string: String, 
     dom_head: Option<Rc<DomNode>>,
+    url_sender: mpsc::Sender<crate::url_format::Url>, 
+    dom_head_rcvr: mpsc::Receiver<Rc<DomNode>>,
+    network_thread : thread::JoinHandle<usize>,
 }
 
-#[derive(Clone)]
-struct HeadState{
-    font_size: usize,
-    link: Option<String>
-}
-
-impl HeadState{
-    pub fn new() -> Self{
-        HeadState {
-            font_size: 12,
-            link: None
-        }
-    }
-
-    pub fn update_state(&mut self, node: &Rc<DomNode>){
-        const FONT_STEP_SIZE: usize = 2;
-        match node.tag_name.as_str(){
-            //fight me 
-            "h1" => {self.font_size = 12 + FONT_STEP_SIZE*5},
-            "h2" => {self.font_size = 12 + FONT_STEP_SIZE*4},
-            "h3" => {self.font_size = 12 + FONT_STEP_SIZE*3},
-            "h4" => {self.font_size = 12 + FONT_STEP_SIZE*2},
-            "h5" => {self.font_size = 12 + FONT_STEP_SIZE*1},
-            "p" => {self.font_size = 12},
-            "a" => {
-                match *node.data.borrow(){
-                    DomNodeData::ValueMap(ref map) => {
-                        if let Some(link) = map.get("href"){
-                            self.link = Some(link.clone());
-                        }
-                    },
-                    _ => {}
-                }
-            },
-            _ => {},
-        };
+impl eframe::App for BrowserApp{
+    //calls every frame
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        //try update dom tree 
+        egui::CentralPanel::default().show(&ctx, |ui| {
+            self.get_search_bar(ui);
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                self.walk_tree(ui);
+            });
+        });
     }
 }
 
 impl BrowserApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+        let (url_sender, url_rcvr) = mpsc::channel();
+        let (dom_sender, dom_rcvr) = mpsc::channel();
+        let network_thread = thread::spawn();
         BrowserApp{ 
             search_string: "".to_string(),
-            dom_head: Some(get_default_dom_head())
+            dom_head: Some(get_default_dom_head()),
+            url_sender, 
+            dom_head_rcvr: dom_rcvr,
+            network_thread,
+
         }
     }
 
-    pub fn temp_new(_cc: &eframe::CreationContext<'_>) -> Self {
-        let string = fs::read_to_string("testHtmlFiles/htmltest1.txt");
-        let head = match string {
-            Ok(mut i) => parse_doc(&mut i),
-            _ => panic!("could not open file")
-        };
-
-        BrowserApp{
-            search_string: "".to_string(),
-            dom_head: head
-        }
-    }
-    
     fn walk_tree(&mut self, ui: &mut egui::Ui){
         fn walk_tree_helper(cur_node: &Rc<DomNode>, ui: &mut egui::Ui, state: &mut HeadState){
             let prev_state = state.clone();
             if cur_node.tag_name == "content"{
                 match *cur_node.data.borrow(){
-                    //TODO make mult lines 
                     DomNodeData::Content(ref i) => {
                         let mut text = eframe::egui::RichText::new(format!("{i}")).font(eframe::egui::FontId::proportional(state.font_size as f32));
                         if let Some(ref link) = state.link{
@@ -130,14 +102,45 @@ impl BrowserApp {
     }
 }
 
-impl eframe::App for BrowserApp{
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(&ctx, |ui| {
-            self.get_search_bar(ui);
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                self.walk_tree(ui);
-            });
-        });
+
+
+#[derive(Clone)]
+struct HeadState{
+    font_size: usize,
+    link: Option<String>
+}
+
+impl HeadState{
+    pub fn new() -> Self{
+        //sets up network thread
+        HeadState {
+            font_size: 12,
+            link: None
+        }
+    }
+
+    pub fn update_state(&mut self, node: &Rc<DomNode>){
+        const FONT_STEP_SIZE: usize = 2;
+        match node.tag_name.as_str(){
+            //fight me 
+            "h1" => {self.font_size = 12 + FONT_STEP_SIZE*5},
+            "h2" => {self.font_size = 12 + FONT_STEP_SIZE*4},
+            "h3" => {self.font_size = 12 + FONT_STEP_SIZE*3},
+            "h4" => {self.font_size = 12 + FONT_STEP_SIZE*2},
+            "h5" => {self.font_size = 12 + FONT_STEP_SIZE*1},
+            "p" => {self.font_size = 12},
+            "a" => {
+                match *node.data.borrow(){
+                    DomNodeData::ValueMap(ref map) => {
+                        if let Some(link) = map.get("href"){
+                            self.link = Some(link.clone());
+                        }
+                    },
+                    _ => {}
+                }
+            },
+            _ => {},
+        };
     }
 }
 

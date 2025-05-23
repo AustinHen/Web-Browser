@@ -4,6 +4,20 @@ use native_tls::TlsConnector;
 use std::io::prelude::*; //prob could cut down this import 
 use std::net::TcpStream;
 use std::collections::HashMap;
+use std::sync::mpsc;
+use std::rc::Rc;
+
+pub fn network_main(url_rcvr: mpsc::Receiver<Url>, dom_sender: mpsc::Sender<Rc<crate::htmlParser::DomNode>>){
+    loop{
+        //blocking wait for url
+        let url = url_rcvr.recv().unwrap();
+        //sends response when we get em
+        if let Some(res) = get_file(url){
+        }else{
+
+        }
+    }
+}
 
 //sends a http/https get msg and returns the server's response
 pub fn get_file(url: Url) -> Option<HttpResponse>{
