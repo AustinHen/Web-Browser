@@ -12,11 +12,19 @@ pub fn network_main(url_rcvr: mpsc::Receiver<Url>, dom_sender: mpsc::Sender<Rc<c
         //blocking wait for url
         let url = url_rcvr.recv().unwrap();
         //sends response when we get em
-        if let Some(res) = get_file(url){
+        if let Some(mut res) = get_file(url){
+            
+            crate::htmlParser::parse_doc(&mut res.body);
         }else{
+            //had an err prob redirect to search
 
         }
     }
+}
+
+//formats the search string and calls get file to preform a duckduckgo search
+pub fn duckduckgo_search(search_string) -> Option<HttpResponse>{
+    todo!();
 }
 
 //sends a http/https get msg and returns the server's response

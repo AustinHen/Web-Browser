@@ -145,7 +145,7 @@ impl HeadState{
 }
 
 //todo make macro do make pages for us 
-fn get_err_dom_head(err_no: &str) -> Rc<DomNode>{
+fn get_err_dom_head(err_no: &str, redirect_str: &str) -> Rc<DomNode>{
     let title = Rc::new(DomNode{
         tag_name: "content".to_string(),
         children: RefCell::new(Vec::new()),
@@ -164,9 +164,24 @@ fn get_err_dom_head(err_no: &str) -> Rc<DomNode>{
         data: RefCell::new(DomNodeData::Content(format!("Errno:{err_no}"))),
     });
 
+    let redirect_url = Rc::new(DomNode{
+        tag_name: "content".to_string(),
+        children: RefCell::new(Vec::new()),
+        data: RefCell::new(DomNodeData::Content(format!("go to: {redirect_str}"))),
+    });
+
+    let mut value_map : HashMap<String, String> = HashMap::new();
+    value_map.insert(String::from("href"), String::from("redirect_str"));
+
+    let redirect_url_a_tag = Rc::new(DomNode{
+        tag_name: "a".to_string(),
+        children: RefCell::new(vec!(redirect_url)),
+        data: RefCell::new(DomNodeData::ValueMap(value_map)),
+    });
+
     Rc::new(DomNode{
         tag_name: "html".to_string(),
-        children: RefCell::new(vec![title_head, more_text]),
+        children: RefCell::new(vec![title_head, more_text, redirect_url_a_tag]),
         data: RefCell::new(DomNodeData::ValueMap(HashMap::new()))
     })
 }
