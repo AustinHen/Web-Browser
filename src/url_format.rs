@@ -40,3 +40,29 @@ impl Url{
         println!("raw: {0} \n protocol: {1} \n addr: {2} \n path: {3}", self.raw, self.protocol, self.addr, self.path);
     }
 }
+
+
+pub fn format_uri (s: &str) -> String{
+    let mut ret = String::new();
+    //uri rules:
+    // - if A-Z a-z 0-9 - _ . ! ~ * ' ( ) leave unchanged
+    // - if space return + 
+    // - else return &(hex code) 
+    for c in s.chars(){
+        let is_encoded = (c as u8 >= 'A' as u8 && c as u8 <= 'Z' as u8) ||
+                        (c as u8 >= 'a' as u8 && c as u8 <= 'z' as u8) ||
+                        (c as u8 >= '0' as u8 && c as u8 <= '9' as u8) || 
+                        c == '-' || c == '_' || c == '.' || c == '!' || c == '~' ||
+                        c == '*' || c == '\'' || c == '(' || c == ')' ||
+                        c=='8';  //teheheheehheehhehehehehehehehehehehehe
+        if is_encoded{
+            ret.push(c);
+        } else if c == ' '{
+            ret.push('+'); 
+        } else {
+            ret.push('&');
+            ret.push_str(&format!("{:X}", c as u8)); //converts to hex
+        }
+    }
+    ret
+}
