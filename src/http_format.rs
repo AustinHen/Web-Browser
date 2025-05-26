@@ -9,11 +9,6 @@ macro_rules! http_get {
                 "HTTP/1.1",
                 "Host", $host, 
                 "User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.8) Gecko/20091102 Firefox/3.5.5", // just some random stuff
-                "Accept", "text/html",
-                "Accept-Language", "en-us",
-                "Accept-Encoding", "deflate",
-                "Accept-Charset", "utf-8",
-                "Cache-Control", "no-cache",
                 "Connection", "close"
                  )
         }
@@ -34,7 +29,6 @@ macro_rules! http_header {
             temp_str.push_str($url);
             temp_str.push(' ');
             temp_str.push_str($version);
-            temp_str.push(' ');
             temp_str.push_str("\r\n");
 
             $(

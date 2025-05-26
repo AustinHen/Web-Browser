@@ -34,7 +34,6 @@ impl eframe::App for BrowserApp{
         if let Ok(mut new_body) = self.body_rcvr.try_recv(){
             //have new body to parse / draw
             if let Some(new_dom_head) = parse_doc(&mut new_body){
-                println!("updated domhead");
                 self.dom_head = Some(new_dom_head);
             }else{
                 panic!("we have a body but no parse");

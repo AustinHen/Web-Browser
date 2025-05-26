@@ -45,13 +45,11 @@ pub fn get_file(url: &Url) -> Option<HttpResponse>{
     //sets up tsl
     let connector = TlsConnector::new().unwrap(); 
 
-    //if the path does not have alphabet chars then it is prob empty and we should use index.html
-
     let request_msg = http_get!(&url.addr, &url.path);
-    println!("{}", request_msg);
     let request_msg = request_msg.into_bytes();
 
     let port_num = if url.protocol == "https" {"443"} else {"80"}; //default to http
+
     let Ok(stream) = TcpStream::connect(format!("{0}:{port_num}", url.addr)) else {return None;};
     let Ok(mut stream) = connector.connect(&url.addr, stream) else {
         println!("here");
@@ -63,10 +61,9 @@ pub fn get_file(url: &Url) -> Option<HttpResponse>{
     }
 
     //read in file 
-    //let mut read_bytes = Vec::new();
     let mut read_string = String::new();
-
     stream.read_to_string(&mut read_string).unwrap();
+
     println!("{:?}", read_string);
     println!("------------------------------");
     HttpResponse::new(&read_string) 
@@ -85,7 +82,6 @@ impl HttpResponse{
         let Some((header, body)) = read_string.split_once("\r\n\r\n") else {return None};
 
         let body = body.trim();
-        println!("{body}");
 
         //parse header 
         let header_lines : Vec<&str> = header.split("\n").collect();
@@ -98,7 +94,7 @@ impl HttpResponse{
                 res_code += (char as u8  - '0' as u8) as usize;  //c is so nice : no as nonsense 
             }
         }
-        //hacky fix 
+        //hacky fix  (removes the 1.1 bit) 
         res_code -= 11000;
 
         //get all meta data 
