@@ -5,34 +5,50 @@ use std::io::prelude::*; //prob could cut down this import
 use std::net::TcpStream;
 use std::collections::HashMap;
 use std::sync::mpsc;
-use std::rc::Rc;
 
-pub fn network_main(url_rcvr: mpsc::Receiver<Url>, dom_sender: mpsc::Sender<Rc<crate::htmlParser::DomNode>>){
+pub fn network_main(url_rcvr: mpsc::Receiver<Url>, dom_sender: mpsc::Sender<String>){
     loop{
         //blocking wait for url
         let url = url_rcvr.recv().unwrap();
+        url.print();
+        
         //sends response when we get em
-        if let Some(mut res) = get_file(url){
-            
-            crate::htmlParser::parse_doc(&mut res.body);
-        }else{
-            //had an err prob redirect to search
+        if let Some(res) = get_file(&url){
+            println!("reponse code: {0}", res.response_code);
+            if res.response_code == 200{ 
+                //can just send it body
+                println!("sent a body");
+                dom_sender.send(res.body).unwrap();
+            }else{
+                //hit an err -> show the err page
+                let redirect_str = res.meta_data.get("redirect");
+                let search_string = Some(url.raw);
+                dom_sender.send(crate::gui::get_err_html(&format!("{0}", res.response_code), redirect_str, search_string)).unwrap();
+            }
 
+        }else{
+            //no server so just duckduckgo it 
+            let to_search = Url::new(crate::url_format::format_duckduckgo_search(&url.raw));
+            if let Some(res) = get_file(&to_search){
+                dom_sender.send(res.body).unwrap();
+            }else{
+                //prob bad to panic
+                panic!("merp duck duck go not working");
+            }
+            
         }
     }
 }
 
-//formats the search string and calls get file to preform a duckduckgo search
-pub fn duckduckgo_search(search_string) -> Option<HttpResponse>{
-    todo!();
-}
-
 //sends a http/https get msg and returns the server's response
-pub fn get_file(url: Url) -> Option<HttpResponse>{
+pub fn get_file(url: &Url) -> Option<HttpResponse>{
     //sets up tsl
     let connector = TlsConnector::new().unwrap(); 
 
+    //if the path does not have alphabet chars then it is prob empty and we should use index.html
+
     let request_msg = http_get!(&url.addr, &url.path);
+    println!("{}", request_msg);
     let request_msg = request_msg.into_bytes();
 
     let port_num = if url.protocol == "https" {"443"} else {"80"}; //default to http
@@ -47,24 +63,13 @@ pub fn get_file(url: Url) -> Option<HttpResponse>{
     }
 
     //read in file 
-    let mut read_bytes = Vec::new();
+    //let mut read_bytes = Vec::new();
+    let mut read_string = String::new();
 
-    loop {
-        let mut temp_buff = [0; 128];
-        if let Ok(len) = stream.read(& mut temp_buff){ 
-            if len == 0 {
-                break;
-            }
-
-            read_bytes.extend_from_slice(&temp_buff[0..len as usize]);
-        }else{
-            println!("err when reading file");
-            break;
-        }
-    }
-    println!("{0}", String::from_utf8(read_bytes.clone()).unwrap());
-
-    HttpResponse::new(&read_bytes) 
+    stream.read_to_string(&mut read_string).unwrap();
+    println!("{:?}", read_string);
+    println!("------------------------------");
+    HttpResponse::new(&read_string) 
 }
 
 
@@ -75,11 +80,12 @@ pub struct HttpResponse{ //i hate pub
 }
 
 impl HttpResponse{
-    pub fn new(bytes: &[u8]) -> Option<Self>{
+    pub fn new(read_string: &str) -> Option<Self>{
         //split body and header 
-        let bytes = bytes.to_vec();
-        let bytes = String::from_utf8(bytes).unwrap();
-        let Some((header, body)) = bytes.split_once("\r\n\r\n") else {return None};
+        let Some((header, body)) = read_string.split_once("\r\n\r\n") else {return None};
+
+        let body = body.trim();
+        println!("{body}");
 
         //parse header 
         let header_lines : Vec<&str> = header.split("\n").collect();
@@ -92,6 +98,8 @@ impl HttpResponse{
                 res_code += (char as u8  - '0' as u8) as usize;  //c is so nice : no as nonsense 
             }
         }
+        //hacky fix 
+        res_code -= 11000;
 
         //get all meta data 
         let mut meta_data : HashMap<String, String> = HashMap::new();

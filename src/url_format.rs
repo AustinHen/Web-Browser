@@ -41,6 +41,11 @@ impl Url{
     }
 }
 
+pub fn format_duckduckgo_search(search_string: &str) -> String{
+    let mut ret = String::from("https://html.duckduckgo.com/html?q=");
+    ret.push_str(&format_uri(search_string));
+    ret
+}
 
 pub fn format_uri (s: &str) -> String{
     let mut ret = String::new();

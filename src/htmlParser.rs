@@ -1,21 +1,17 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use regex::Regex;
 
-pub fn parse_doc(doc: &mut str) -> Option<Rc<DomNode>>{ 
+pub fn parse_doc(doc: &mut str) -> Option<Arc<DomNode>>{ 
     let doc = preprocess(doc);
     generate_dom_tree(doc.as_str())
 }
 
 fn preprocess(doc: &mut str) -> String{
-   return remove_comments(doc); 
-}
-
-fn fetch_srcs(){
-    todo!();
+    return remove_excess(&remove_doc_type(&remove_comments(doc))); 
 }
 
 fn remove_comments(doc: & str) -> String{
@@ -24,7 +20,46 @@ fn remove_comments(doc: & str) -> String{
     return ret;
 }
 
-fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
+fn remove_doc_type(doc: & str) -> String{
+    let r = Regex::new(r"(<!DOCTYPE.*>)").unwrap();
+    let ret = r.replace_all(doc, "").into_owned();
+    return ret;
+}
+
+//removes up to the first <  and everyting after the last >
+fn remove_excess(doc: &str) -> String{
+    let mut open_marker = 0; 
+    for (i, val) in doc.chars().enumerate(){ 
+        if val == '<'{
+            open_marker = i;
+            break;
+        }
+    }
+
+    let mut close_marker = 0; 
+    for (i, val) in doc.chars().rev().enumerate(){
+        if val == '>'{
+            close_marker = doc.len() - i;
+            break
+        }
+    }
+
+    if close_marker < open_marker{
+        return doc.to_string();
+    }
+    
+    //substrings are weird so ima just do this so no bug
+    let mut ret = String::new();
+
+    for (i, c) in doc.chars().enumerate(){
+        if i >= open_marker && i <= close_marker{
+            ret.push(c);
+        }
+    }
+    ret
+}
+
+fn generate_dom_tree(preprocessed_doc: & str) -> Option<Arc<DomNode>>{
     let doc = preprocessed_doc; 
     let mut opens : Vec<usize> = vec![];
     let mut closes : Vec<usize> = vec![];
@@ -44,13 +79,13 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
     //anything between a open and a close is an iner tag
     //anything between a close and an open is out of a tag 
     /*tokenizes doc*/
-    let mut stack : VecDeque<Rc<DomNode>> = VecDeque::new();
-    let mut dom_head : Option<Rc<DomNode>> = None;
+    let mut stack : VecDeque<Arc<DomNode>> = VecDeque::new();
+    let mut dom_head : Option<Arc<DomNode>> = None;
     for (idx, str_idx) in opens.iter().enumerate(){
         //ADDS TAG
         let substring: String = doc.chars().skip(opens[idx]).take(closes[idx] - str_idx + 1).collect();
         if let Some(TagCreateResult::Node(to_add)) = DomNode::get_tag(&substring){
-            let to_add = Rc::new(to_add);
+            let to_add = Arc::new(to_add);
             if let Some(head) = stack.front(){
                 //add to_add as child 
                 head.children.borrow_mut().push(to_add.clone());
@@ -63,6 +98,7 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
 
             //updates dom head TODO make better  
             if idx == 0{
+                println!("HERRRRRRRRRRRRRRRRRRRRRREEEEEEEEEEEEEEEEEEEEEEEE");
                 dom_head = Some(to_add);
             }
         }else{
@@ -78,7 +114,7 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
         let substring: String = doc.chars().skip(closes[idx] + 1).take(opens[idx+1]-closes[idx]-1).collect();
         if let Some(to_add) = DomNode::get_non_tag(&substring){
             if let Some(head) = stack.front(){
-                let to_add = Rc::new(to_add);
+                let to_add = Arc::new(to_add);
                 head.children.borrow_mut().push(to_add);
             }            
         }
@@ -90,7 +126,7 @@ fn generate_dom_tree(preprocessed_doc: & str) -> Option<Rc<DomNode>>{
 
 pub struct DomNode{
     pub tag_name: String, //TODO could make enum of types but idk yet 
-    pub children: RefCell<Vec<Rc<DomNode>>>,
+    pub children: RefCell<Vec<Arc<DomNode>>>,
     pub data: RefCell<DomNodeData>,
 }
 
@@ -166,7 +202,7 @@ impl DomNode{
 }
 
 //TODO move to tests/debug file 
-pub fn print_tree(head : Rc<DomNode>, depth : usize){
+pub fn print_tree(head : Arc<DomNode>, depth : usize){
     for _ in 0..depth{
         print!("--");
     }
