@@ -237,7 +237,7 @@ enum TagCreateResult{
 pub fn test_parser(){
     /*reads in html files and passes them into parse_html_string*/
     print!("STARTING HTML TEST 1 \n");
-    let string = fs::read_to_string("testHtmlFiles/htmltest1.txt");
+    let string = fs::read_to_string("testHtmlFiles/ddghi.txt");
     match string {
        Ok(mut i) => parse_doc(&mut i),
        _ => panic!("could not open file")
