@@ -8,8 +8,8 @@ macro_rules! http_get {
                 $url, 
                 "HTTP/1.1",
                 "Host", $host, 
-                "User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.8) Gecko/20091102 Firefox/3.5.5", // just some random stuff
-                "Connection", "close"
+                "User-Agent", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)", // just some random stuff
+                "Connection", "close" 
                  )
         }
     };

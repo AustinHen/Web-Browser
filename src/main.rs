@@ -6,7 +6,8 @@ mod url_format;
 
 
 fn main() {
-    htmlParser::test_parser();
+    gui::gui_main();
+    //htmlParser::test_parser();
     
     //TODO join threads 
 }

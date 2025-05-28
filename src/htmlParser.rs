@@ -22,7 +22,7 @@ fn remove_comments(doc: & str) -> String{
 
 fn remove_doc_type(doc: & str) -> String{
     let r = Regex::new(r"(<!DOCTYPE.*>)").unwrap();
-    let ret = r.replace_all(doc, "").into_owned();
+    let ret = r.replace_all(doc, "<html>").into_owned();
     return ret;
 }
 
@@ -61,6 +61,7 @@ fn remove_excess(doc: &str) -> String{
 
 fn generate_dom_tree(preprocessed_doc: & str) -> Option<Arc<DomNode>>{
     let doc = preprocessed_doc; 
+    println!("{0}", doc);
     let mut opens : Vec<usize> = vec![];
     let mut closes : Vec<usize> = vec![];
 
